@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SnapBrief</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--bg2:#141414;--bg3:#1c1c1c;--bg4:#252525;--border:#2a2a2a;--text:#f0f0f0;--text2:#aaa;--text3:#666;--accent:#e63946;--accent2:#ff6b6b}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+/* HEADER */
+header{background:rgba(10,10,10,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px}.logo span{color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:8px}
+.icon-btn{background:transparent;border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.icon-btn:hover{background:var(--bg3);color:var(--text);border-color:#444}
+/* SEARCH */
+.search-bar{padding:10px 16px;border-bottom:1px solid var(--border);display:none}
+.search-bar.open{display:block}
+.search-wrap{display:flex;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:24px;padding:8px 14px;gap:8px}
+.search-wrap input{flex:1;background:transparent;border:none;color:var(--text);font-size:14px;outline:none}
+.search-wrap input::placeholder{color:var(--text3)}
+.search-wrap span{color:var(--text3);font-size:16px;cursor:pointer}
+/* CATEGORIES */
+.cats{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;border-bottom:1px solid var(--border);scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{white-space:nowrap;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .2s}
+.cat.active{background:var(--accent);border-color:var(--accent);color:#fff}
+/* BREAKING TICKER */
+.ticker{background:var(--accent);padding:8px 16px;display:flex;align-items:center;gap:10px;overflow:hidden}
+.ticker-label{font-size:11px;font-weight:700;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:10px;white-space:nowrap;color:#fff}
+.ticker-text{font-size:13px;color:#fff;white-space:nowrap;animation:scroll 25s linear infinite}
+@keyframes scroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+/* TRENDING */
+.trending{padding:12px 16px;border-bottom:1px solid var(--border)}
+.section-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.trend-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;padding:5px 12px;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s}
+.chip:hover{border-color:#444;color:var(--text)}
+/* FEED */
+.feed{padding:12px 16px;display:flex;flex-direction:column;gap:0;max-width:680px;margin:0 auto}
+/* NEWS CARD */
+.card{background:var(--bg2);border-radius:0;border-bottom:1px solid var(--border);padding:16px 0;display:flex;gap:12px;cursor:pointer;transition:background .15s;position:relative}
+.card:first-child{border-top:1px solid var(--border)}
+.card:hover{background:var(--bg3)}
+.card.featured{flex-direction:column;background:var(--bg2);border-radius:16px;border:1px solid var(--border);margin-bottom:12px;padding:0;overflow:hidden}
+.card.featured:hover{border-color:#333}
+.feat-img{width:100%;height:200px;object-fit:cover;display:block;background:var(--bg4)}
+.feat-img-placeholder{width:100%;height:200px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:60px}
+.feat-body{padding:14px}
+.card-thumb{width:90px;height:70px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--bg4)}
+.card-thumb-placeholder{width:90px;height:70px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.card-content{flex:1;min-width:0}
+.card-meta{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+.src-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.card-source{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.4px}
+.card-time{font-size:11px;color:var(--text3)}
+.card-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600}
+.badge-breaking{background:rgba(230,57,70,.2);color:var(--accent-2)}
+.badge-trending{background:rgba(255,165,0,.15);color:#ffa500}
+.card-title{font-size:15px;font-weight:600;line-height:1.4;color:var(--text);margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card.featured .card-title{font-size:18px;-webkit-line-clamp:3}
+.card-summary{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-summary.loading{color:var(--text3);font-style:italic}
+.card-summary.expanded{-webkit-line-clamp:unset}
+.card-actions{display:flex;align-items:center;gap:8px}
+.action-btn{background:transparent;border:1px solid var(--border);color:var(--text3);padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
+.action-btn:hover{border-color:#444;color:var(--text)}
+.action-btn.liked{border-color:var(--accent);color:var(--accent)}
+.action-btn.saved{border-color:#ffa500;color:#ffa500}
+.read-link{font-size:11px;color:var(--accent);text-decoration:none;font-weight:500;margin-left:auto}
+/* EXPANDED CARD */
+.expand-btn{font-size:11px;color:var(--accent);cursor:pointer;margin-bottom:8px;display:inline-block}
+/* SHIMMER */
+.shimmer{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:sh 1.5s infinite;border-radius:6px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sh-block{height:12px;margin-bottom:8px}
+/* SETUP MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal-box{background:var(--bg2);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:520px;border:1px solid var(--border);border-bottom:none}
+.modal-handle{width:40px;height:4px;background:var(--bg4);border-radius:2px;margin:0 auto 20px}
+.modal-box h2{font-size:20px;font-weight:700;margin-bottom:6px}
+.modal-box p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.modal-box input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:13px 16px;border-radius:12px;font-size:14px;margin-bottom:12px;outline:none}
+.modal-box input:focus{border-color:var(--accent)}
+.btn-primary{width:100%;background:var(--accent);border:none;color:#fff;padding:14px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px}
+.btn-secondary{width:100%;background:transparent;border:1px solid var(--border);color:var(--text2);padding:12px;border-radius:12px;font-size:14px;cursor:pointer}
+.btn-secondary:hover{border-color:#444;color:var(--text)}
+/* SAVED PANEL */
+.panel{position:fixed;inset:0;background:var(--bg);z-index:150;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto}
+.panel.open{transform:translateX(0)}
+.panel-header{background:rgba(10,10,10,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0}
+.panel-header h2{font-size:18px;font-weight:700}
+.close-btn{background:transparent;border:1px solid var(--border);color:var(--text2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,.97);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0;cursor:pointer;color:var(--text3);font-size:10px;gap:3px;transition:color .2s;border:none;background:transparent}
+.nav-item span:first-child{font-size:20px}
+.nav-item.active{color:var(--accent)}
+.nav-badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--accent);color:#fff;font-size:9px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.pb{padding-bottom:70px}
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty div{font-size:40px;margin-bottom:12px}
+.empty p{font-size:15px;color:var(--text2);margin-bottom:4px}
+/* DARK/LIGHT */
+body.light{--bg:#f5f5f5;--bg2:#fff;--bg3:#f0f0f0;--bg4:#e8e8e8;--border:#e0e0e0;--text:#111;--text2:#555;--text3:#999}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Snap<span>Brief</span></div>
+  <div class="header-right">
+    <button class="icon-btn" id="searchToggle" title="Search">🔍</button>
+    <button class="icon-btn" id="themeToggle" title="Toggle theme">🌙</button>
+    <button class="icon-btn" onclick="showSetup()" title="API Settings">⚙️</button>
+  </div>
+</header>
+
+<div class="search-bar" id="searchBar">
+  <div class="search-wrap">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="Search news..." oninput="onSearch(this.value)"/>
+    <span onclick="closeSearch()">✕</span>
+  </div>
+</div>
+
+<div class="ticker" id="ticker" style="display:none">
+  <span class="ticker-label">🔴 LIVE</span>
+  <span class="ticker-text" id="tickerText"></span>
+</div>
+
+<div class="cats" id="cats"></div>
+
+<div class="trending" id="trendingSection">
+  <div class="section-title">🔥 Trending Topics</div>
+  <div class="trend-chips" id="trendChips"></div>
+</div>
+
+<div class="feed pb" id="feed"></div>
+
+<!-- Saved Panel -->
+<div class="panel" id="savedPanel">
+  <div class="panel-header">
+    <button class="close-btn" onclick="closePanel()">←</button>
+    <h2>📌 Saved Stories</h2>
+  </div>
+  <div class="feed pb" id="savedFeed"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-home" onclick="switchNav('home')"><span>🏠</span><span>Home</span></button>
+  <button class="nav-item" id="nav-explore" onclick="switchNav('explore')"><span>🔎</span><span>Explore</span></button>
+  <button class="nav-item" style="position:relative" id="nav-saved" onclick="switchNav('saved')"><span>🔖</span><span>Saved</span><span class="nav-badge" id="savedBadge" style="display:none">0</span></button>
+  <button class="nav-item" id="nav-settings" onclick="showSetup()"><span>⚙️</span><span>Settings</span></button>
+</nav>
+
+<!-- Setup Modal -->
+<div class="modal-overlay" id="setupModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <h2>🔑 Connect GNews API</h2>
+    <p>Get your <strong>free API key</strong> at <strong style="color:var(--accent)">gnews.io</strong> — takes 2 minutes, 100 requests/day free. Or use sample news to explore the app first.</p>
+    <input type="text" id="apiKeyInput" placeholder="Paste your GNews API key here..."/>
+    <button class="btn-primary" onclick="saveKey()">✅ Save & Load Real News</button>
+    <button class="btn-secondary" onclick="useMock()">📰 Use Sample News (no key needed)</button>
+  </div>
+</div>
+
+<script>
+const CATS=[{id:'general',e:'🌍',l:'Top'},{id:'technology',e:'💻',l:'Tech'},{id:'business',e:'📈',l:'Business'},{id:'sports',e:'⚽',l:'Sports'},{id:'entertainment',e:'🎬',l:'Entertainment'},{id:'health',e:'🏥',l:'Health'},{id:'science',e:'🔬',l:'Science'},{id:'world',e:'🗺️',l:'World'}];
+const TRENDS={general:['AI','Climate','Elections','Economy','Space'],technology:['ChatGPT','Apple','Meta','Quantum','Cybersecurity'],business:['Markets','Startup','IPO','Crypto','GDP'],sports:['Cricket','Football','Olympics','F1','Tennis'],entertainment:['Movies','OTT','Music','Awards','Celebrity'],health:['Cancer Research','Mental Health','Vaccines','Diet','Fitness'],science:['NASA','Physics','Biology','Discovery','Mars'],world:['UN','War','Diplomacy','G20','Migration']};
+const BREAKING=['Scientists confirm water on Mars surface','AI model beats human experts at medical diagnosis','Stock markets hit all-time high globally','India wins T20 World Cup in thrilling final','New electric car sets 800 km range record'];
+
+let API_KEY=localStorage.getItem('gnews_key')||'';
+let currentCat='general';
+let allArticles=[];
+let savedArticles=JSON.parse(localStorage.getItem('snapbrief_saved')||'[]');
+let likedArticles=JSON.parse(localStorage.getItem('snapbrief_liked')||'[]');
+let summaryCache=JSON.parse(localStorage.getItem('snapbrief_cache')||'{}');
+let searchMode=false;
+let lightMode=localStorage.getItem('snapbrief_theme')==='light';
+
+const MOCK=[
+  {title:"Global AI Regulation Summit Concludes with Historic Agreements",source:"TechWorld",publishedAt:"2h ago",url:"#",image:null,cat:"technology,general",description:"Leaders from 40+ nations gathered in Geneva to finalize landmark AI governance frameworks. The summit concluded with binding agreements on transparency, safety testing, and ethical deployment of artificial intelligence systems across borders. Tech giants pledged cooperation."},
+  {title:"Sensex Crosses 80,000 for First Time in Indian Market History",source:"Economic Times",publishedAt:"3h ago",url:"#",image:null,cat:"business,general",description:"India's benchmark Sensex index breached the historic 80,000 mark driven by strong FII inflows, positive global cues, and robust earnings from banking and IT sectors. Analysts remain bullish for the short to medium term outlook."},
+  {title:"NASA's Perseverance Rover Confirms Water Ice Beneath Mars Surface",source:"Space.com",publishedAt:"5h ago",url:"#",image:null,cat:"science,general",description:"NASA confirmed the presence of substantial water ice deposits beneath the Martian surface using Perseverance rover data. The breakthrough discovery dramatically improves prospects for future human missions and potential signs of ancient microbial life."},
+  {title:"India Clinches T20 World Cup in Breathtaking Last-Ball Thriller",source:"Cricbuzz",publishedAt:"1d ago",url:"#",image:null,cat:"sports",description:"Team India claimed the T20 World Cup with a nail-biting last-ball victory against Australia. Virat Kohli's brilliant unbeaten 76 guided India to a challenging total that the bowling attack defended brilliantly in the final over."},
+  {title:"New Study Links Chronic Sleep Deprivation to 34% Higher Heart Risk",source:"Health Today",publishedAt:"6h ago",url:"#",image:null,cat:"health",description:"A major international study of over 500,000 participants found sleeping less than 6 hours per night increases cardiovascular disease risk by 34%. Researchers strongly recommend 7–9 hours of quality sleep for adults to maintain optimal heart health."},
+  {title:"Marvel's Latest Film Shatters Opening Weekend Box Office Record",source:"Variety",publishedAt:"4h ago",url:"#",image:null,cat:"entertainment",description:"The latest Marvel blockbuster earned a staggering $520 million globally in its opening weekend, shattering all previous records. Critics praised its breathtaking visual effects and emotionally resonant storytelling as the franchise's finest chapter."},
+  {title:"UN Climate Report: Arctic Ice Melting 3x Faster Than Predicted",source:"Reuters",publishedAt:"8h ago",url:"#",image:null,cat:"world,general",description:"A landmark UN climate report reveals Arctic sea ice is disappearing three times faster than models previously projected. Scientists warn this could trigger irreversible feedback loops affecting global weather patterns within the next two decades."},
+  {title:"Google Unveils Breakthrough Quantum Processor That Rewrites Computing",source:"The Verge",publishedAt:"12h ago",url:"#",image:null,cat:"technology",description:"Google DeepMind unveiled a next-generation quantum processor that solves in minutes what classical supercomputers would take thousands of years to compute. The chip represents the most significant leap toward practical quantum computing applications yet."},
+  {title:"WHO Declares End to Three-Year Global Health Emergency",source:"BBC Health",publishedAt:"10h ago",url:"#",image:null,cat:"health,world",description:"The World Health Organization officially declared the end of the three-year global health emergency, citing dramatically reduced hospitalisations and effective vaccine coverage across 150+ countries. Recovery programs will now shift to long-term health strengthening."},
+  {title:"Elon Musk's SpaceX Successfully Lands Rocket on Moon for First Time",source:"Space News",publishedAt:"14h ago",url:"#",image:null,cat:"science,technology",description:"SpaceX achieved a historic milestone by successfully landing a Starship rocket on the lunar surface for the first time. The mission marks a major step toward NASA's Artemis goal of returning humans to the Moon by 2026."}
+];
+
+function init(){
+  applyTheme();
+  renderCats();
+  renderTrending();
+  renderTicker();
+  updateSavedBadge();
+  if(!API_KEY){document.getElementById('setupModal').style.display='flex';}
+  else loadNews();
+}
+
+function applyTheme(){
+  document.body.classList.toggle('light',lightMode);
+  document.getElementById('themeToggle').textContent=lightMode?'☀️':'🌙';
+}
+
+function renderCats(){
+  document.getElementById('cats').innerHTML=CATS.map(c=>`<button class="cat${c.id===currentCat?' active':''}" onclick="switchCat('${c.id}')">${c.e} ${c.l}</button>`).join('');
+}
+
+function renderTrending(){
+  const chips=(TRENDS[currentCat]||TRENDS.general).map(t=>`<span class="chip" onclick="doSearch('${t}')">#${t}</span>`).join('');
+  document.getElementById('trendChips').innerHTML=chips;
+}
+
+function renderTicker(){
+  const t=BREAKING[Math.floor(Math.random()*BREAKING.length)];
+  document.getElementById('tickerText').textContent=t+' • '+BREAKING[(BREAKING.indexOf(t)+1)%BREAKING.length];
+  document.getElementById('ticker').style.display='flex';
+}
+
+function switchCat(cat){currentCat=cat;searchMode=false;renderCats();renderTrending();loadNews();}
+
+function switchNav(tab){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('nav-'+tab)?.classList.add('active');
+  if(tab==='saved'){openSavedPanel();}
+  else if(tab==='explore'){openSearch();}
+}
+
+function openSearch(){document.getElementById('searchBar').classList.add('open');document.getElementById('searchInput').focus();}
+function closeSearch(){document.getElementById('searchBar').classList.remove('open');document.getElementById('searchInput').value='';if(searchMode){searchMode=false;renderFeed(allArticles);}}
+
+function onSearch(q){
+  if(!q.trim()){searchMode=false;renderFeed(allArticles);return;}
+  searchMode=true;
+  const filtered=allArticles.filter(a=>a.title.toLowerCase().includes(q.toLowerCase())||(a.description||'').toLowerCase().includes(q.toLowerCase()));
+  renderFeed(filtered,false);
+}
+
+function doSearch(q){
+  document.getElementById('searchBar').classList.add('open');
+  document.getElementById('searchInput').value=q;
+  onSearch(q);
+}
+
+document.getElementById('searchToggle').onclick=()=>{
+  const bar=document.getElementById('searchBar');
+  if(bar.classList.contains('open'))closeSearch();
+  else openSearch();
+};
+
+document.getElementById('themeToggle').onclick=()=>{
+  lightMode=!lightMode;
+  localStorage.setItem('snapbrief_theme',lightMode?'light':'dark');
+  applyTheme();
+};
+
+function showSetup(){document.getElementById('setupModal').style.display='flex';}
+function saveKey(){
+  const k=document.getElementById('apiKeyInput').value.trim();
+  if(!k){showToast('Please enter a valid key');return;}
+  API_KEY=k;localStorage.setItem('gnews_key',k);
+  document.getElementById('setupModal').style.display='none';
+  loadNews();
+}
+function useMock(){document.getElementById('setupModal').style.display='none';loadMock();}
+
+async function loadNews(){
+  showShimmer();
+  try{
+    const url=`https://gnews.io/api/v4/top-headlines?category=${currentCat}&lang=en&max=10&apikey=${API_KEY}`;
+    const res=await fetch(url);const data=await res.json();
+    if(data.errors||!data.articles){showToast('API error — using sample news');loadMock();return;}
+    allArticles=data.articles;
+    renderFeed(allArticles);
+  }catch(e){showToast('Network error — using samples');loadMock();}
+}
+
+function loadMock(){
+  allArticles=MOCK.filter(a=>a.cat.includes(currentCat)||currentCat==='general').map(a=>({title:a.title,source:{name:a.source},publishedAt:a.publishedAt,url:a.url,image:null,description:a.description}));
+  if(!allArticles.length)allArticles=MOCK.map(a=>({title:a.title,source:{name:a.source},publishedAt:a.publishedAt,url:a.url,image:null,description:a.description}));
+  renderFeed(allArticles);
+}
+
+function renderFeed(articles,summarize=true){
+  const feed=document.getElementById('feed');
+  if(!articles.length){feed.innerHTML=`<div class="empty"><div>🔍</div><p>No results found</p><small style="color:var(--text3)">Try different keywords</small></div>`;return;}
+  const feat=articles[0];
+  const rest=articles.slice(1);
+  const featHTML=cardHTML(feat,0,true);
+  const restHTML=rest.map((a,i)=>cardHTML(a,i+1,false)).join('');
+  feed.innerHTML=featHTML+restHTML;
+  if(summarize)articles.forEach((a,i)=>doSummarize(a,i));
+}
+
+function cardHTML(a,i,featured){
+  const src=a.source?.name||'News';
+  const time=formatTime(a.publishedAt);
+  const isLiked=likedArticles.includes(a.title);
+  const isSaved=savedArticles.some(s=>s.title===a.title);
+  const isBreaking=i===0;
+  const isTrending=i===2||i===4;
+  const badge=isBreaking?`<span class="card-badge badge-breaking">🔴 Breaking</span>`:isTrending?`<span class="card-badge badge-trending">🔥 Trending</span>`:'';
+
+  if(featured){
+    return`<div class="card featured" onclick="toggleExpand(${i})">
+      <div class="feat-img-placeholder" id="img-${i}">🌍</div>
+      <div class="feat-body">
+        <div class="card-meta"><span class="src-dot"></span><span class="card-source">${src}</span><span class="card-time">${time}</span>${badge}</div>
+        <div class="card-title">${a.title}</div>
+        <div class="card-summary loading" id="sum-${i}">Generating AI summary...</div>
+        <div class="card-actions">
+          <button class="action-btn${isLiked?' liked':''}" onclick="toggleLike(event,'${esc(a.title)}')" id="like-${i}">♥ Like</button>
+          <button class="action-btn${isSaved?' saved':''}" onclick="toggleSave(event,${i})" id="save-${i}">🔖 ${isSaved?'Saved':'Save'}</button>
+          <button class="action-btn" onclick="shareArticle(event,'${esc(a.title)}','${a.url}')">↗ Share</button>
+          <a class="read-link" href="${a.url}" target="_blank" onclick="event.stopPropagation()">Full story →</a>
+        </div>
+      </div>
+    </div>`;
+  }
+  return`<div class="card" onclick="toggleExpand(${i})" style="padding:16px 0">
+    <div class="card-thumb-placeholder" id="img-${i}">📰</div>
+    <div class="card-content">
+      <div class="card-meta"><span class="src-dot"></span><span class="card-source">${src}</span><span class="card-time">${time}</span>${badge}</div>
+      <div class="card-title">${a.title}</div>
+      <div class="card-summary loading" id="sum-${i}">Summarizing...</div>
+      <div class="card-actions">
+        <button class="action-btn${isLiked?' liked':''}" onclick="toggleLike(event,'${esc(a.title)}')" id="like-${i}">♥</button>
+        <button class="action-btn${isSaved?' saved':''}" onclick="toggleSave(event,${i})" id="save-${i}">🔖</button>
+        <button class="action-btn" onclick="shareArticle(event,'${esc(a.title)}','${a.url}')">↗</button>
+        <a class="read-link" href="${a.url}" target="_blank" onclick="event.stopPropagation()">Read →</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;').substring(0,80);}
+
+let expandedCards={};
+function toggleExpand(i){
+  const el=document.getElementById(`sum-${i}`);
+  if(!el)return;
+  expandedCards[i]=!expandedCards[i];
+  el.classList.toggle('expanded',expandedCards[i]);
+}
+
+async function doSummarize(article,idx){
+  const el=document.getElementById(`sum-${idx}`);
+  if(!el)return;
+  const key=article.title?.substring(0,50)||idx;
+  if(summaryCache[key]){el.textContent=summaryCache[key];el.classList.remove('loading');return;}
+  const content=`${article.title}. ${article.description||''}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:`Summarize this news in 2-3 crisp, punchy sentences (max 60 words) like Inshorts app. Be factual, engaging, no opinions, no filler words. Start directly with the news. News: "${content}"`}]})});
+    const data=await res.json();
+    const sum=data.content?.[0]?.text||article.description||'Tap to read the full story.';
+    summaryCache[key]=sum;
+    try{localStorage.setItem('snapbrief_cache',JSON.stringify(summaryCache));}catch(e){}
+    if(document.getElementById(`sum-${idx}`)){document.getElementById(`sum-${idx}`).textContent=sum;document.getElementById(`sum-${idx}`).classList.remove('loading');}
+  }catch(e){if(el){el.textContent=article.description||'Tap to read the full story.';el.classList.remove('loading');}}
+}
+
+function toggleLike(e,title){
+  e.stopPropagation();
+  const idx=likedArticles.indexOf(title);
+  if(idx>-1)likedArticles.splice(idx,1);
+  else likedArticles.push(title);
+  localStorage.setItem('snapbrief_liked',JSON.stringify(likedArticles));
+  document.querySelectorAll('[id^="like-"]').forEach(btn=>{
+    const card=btn.closest('.card');
+    const titleEl=card?.querySelector('.card-title');
+    if(titleEl&&titleEl.textContent.substring(0,50)===title.substring(0,50)){
+      btn.classList.toggle('liked',likedArticles.includes(title));
+    }
+  });
+  showToast(idx>-1?'Removed from liked':'❤️ Liked!');
+}
+
+function toggleSave(e,idx){
+  e.stopPropagation();
+  const a=allArticles[idx];if(!a)return;
+  const si=savedArticles.findIndex(s=>s.title===a.title);
+  if(si>-1){savedArticles.splice(si,1);showToast('Removed from saved');}
+  else{savedArticles.push({...a,savedAt:new Date().toISOString()});showToast('🔖 Saved!');}
+  localStorage.setItem('snapbrief_saved',JSON.stringify(savedArticles));
+  updateSavedBadge();
+  const btn=document.getElementById(`save-${idx}`);
+  if(btn){btn.classList.toggle('saved',si===-1);btn.textContent=si===-1?'🔖 Saved':'🔖 Save';}
+}
+
+function updateSavedBadge(){
+  const b=document.getElementById('savedBadge');
+  if(!b)return;
+  if(savedArticles.length>0){b.style.display='flex';b.textContent=savedArticles.length;}
+  else b.style.display='none';
+}
+
+function openSavedPanel(){
+  const panel=document.getElementById('savedPanel');
+  const feed=document.getElementById('savedFeed');
+  panel.classList.add('open');
+  if(!savedArticles.length){feed.innerHTML=`<div class="empty"><div>🔖</div><p>No saved stories yet</p><small style="color:var(--text3)">Tap 🔖 on any news card to save it</small></div>`;return;}
+  feed.innerHTML=savedArticles.map((a,i)=>{
+    const src=a.source?.name||'News';
+    const time=formatTime(a.savedAt||a.publishedAt);
+    const sum=summaryCache[a.title?.substring(0,50)]||a.description||'';
+    return`<div class="card" style="padding:16px 0">
+      <div class="card-thumb-placeholder">📰</div>
+      <div class="card-content">
+        <div class="card-meta"><span class="src-dot"></span><span class="card-source">${src}</span><span class="card-time">${time}</span></div>
+        <div class="card-title">${a.title}</div>
+        <div class="card-summary">${sum||'Tap to read full story.'}</div>
+        <div class="card-actions">
+          <button class="action-btn" onclick="removeSaved(${i})">🗑 Remove</button>
+          <a class="read-link" href="${a.url}" target="_blank">Read →</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function removeSaved(i){
+  savedArticles.splice(i,1);
+  localStorage.setItem('snapbrief_saved',JSON.stringify(savedArticles));
+  updateSavedBadge();
+  openSavedPanel();
+  showToast('Removed');
+}
+
+function closePanel(){
+  document.getElementById('savedPanel').classList.remove('open');
+  document.getElementById('nav-home').classList.add('active');
+  document.getElementById('nav-saved').classList.remove('active');
+}
+
+function shareArticle(e,title,url){
+  e.stopPropagation();
+  if(navigator.share){navigator.share({title:decodeURIComponent(title),url:url||location.href}).catch(()=>{});}
+  else{navigator.clipboard?.writeText(url||location.href).then(()=>showToast('🔗 Link copied!'));}
+}
+
+function showShimmer(){
+  document.getElementById('feed').innerHTML=Array(4).fill(`<div class="card" style="padding:16px 0">
+    <div style="width:90px;height:70px;border-radius:10px;flex-shrink:0" class="shimmer"></div>
+    <div class="card-content">
+      <div class="shimmer sh-block" style="width:60%;height:10px;margin-bottom:8px"></div>
+      <div class="shimmer sh-block" style="width:100%;height:13px;margin-bottom:6px"></div>
+      <div class="shimmer sh-block" style="width:85%;height:13px;margin-bottom:6px"></div>
+      <div class="shimmer sh-block" style="width:70%;height:11px"></div>
+    </div>
+  </div>`).join('');
+}
+
+function formatTime(t){
+  if(!t)return'';
+  if(t.includes('ago')||t.includes('day')||t.includes('hour'))return t;
+  try{const d=new Date(t);const diff=Math.round((Date.now()-d)/60000);if(diff<1)return'Just now';if(diff<60)return`${diff}m ago`;if(diff<1440)return`${Math.round(diff/60)}h ago`;return`${Math.round(diff/1440)}d ago`;}catch{return t;}
+}
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
